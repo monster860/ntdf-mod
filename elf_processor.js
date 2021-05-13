@@ -177,6 +177,38 @@ exports.patch_file = function patch_file(mod, filename, out_filename, offset) {
 	});
 }
 
+exports.make_c_loader = function make_c_loader(mod) {
+	let def_lines = [];
+	let code_lines = [];
+	let id_ctr = 0;
+	def_lines.push("#include <string.h>");
+	def_lines.push("");
+	code_lines.push("void apply_ntdf_patch(void)");
+	code_lines.push("{");
+	for(let patch of mod.patches) {
+		if(patch.data) {
+			let name = "patch_" + id_ctr++;
+			def_lines.push("unsigned char " + name + "[] __attribute__((aligned(16))) = {");
+			for(let i = 0; i < patch.data.length; i += 16) {
+				let line = "\t";
+				for(let j = i; (j < patch.data.length && j < i+16); j++) {
+					line += "0x"+patch.data[j].toString(16).padStart(2, 0)+", ";
+				}
+				def_lines.push(line);
+			}
+			def_lines.push("};");
+			def_lines.push("");
+
+			code_lines.push("\tmemcpy((void *)0x" + patch.addr.toString(16) + ", " + name + ", 0x" + patch.data.length.toString(16) + ");");
+		} else if(patch.int_data != undefined) {
+			code_lines.push("\t*((int*)0x"+patch.addr.toString(16)+") = 0x" + patch.int_data.toString(16) + ";");
+		}
+	}
+	code_lines.push("}");
+	
+	return def_lines.join("\n") + "\n" + code_lines.join("\n") + "\n";
+}
+
 function read_str(buf, offset) {
 	let end = offset;
 	while(end < buf.length && buf[end] != 0)end++;

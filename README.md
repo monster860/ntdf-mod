@@ -1,9 +1,8 @@
 ## Building
 
 You need the following:
-- PS2 toolchain, [found here](https://github.com/ps2dev/ps2toolchain). This will require a linux environment. If you are on windows you may use Windows Subsystem for Linux
+- PS2 sdk + toolchain, [found here](https://github.com/ps2dev/ps2dev). This will require a linux environment. If you are on windows you may use Windows Subsystem for Linux
 - Node.JS
-- A copy of the `SCUS_973.67` file found on the game disk. This file must be placed in the mod folder of this repository
 
 To build, use the `build.sh` shell script. This will create two files. `934F9081.pnach`, and `df_hack.elf`.
 

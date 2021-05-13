@@ -1,6 +1,7 @@
 mod/934F9081.pnach
 mod/df_hack.elf
 mod/SCUS_973.67
+mod/loader/patch.c
 **/*.ii
 **/*.o
 **/*.s

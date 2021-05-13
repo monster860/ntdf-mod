@@ -1,6 +1,6 @@
 const path = require('path');
 const fs = require('fs');
-const {create_mod, make_pnach, patch_file} = require('../elf_processor.js');
+const {create_mod, make_pnach, patch_file, make_c_loader} = require('../elf_processor.js');
 
 create_mod(path.join(__dirname, "mod.o"), 0x3043B0, {"memset": 0x2BFE8C}).then(mod => {
 	mod.patches.push({addr: 0x111074, int_data: 0x0c000000 | (mod.symbols["do_mod"].abs_addr >> 2)});
@@ -16,7 +16,10 @@ create_mod(path.join(__dirname, "mod.o"), 0x3043B0, {"memset": 0x2BFE8C}).then(m
 	fs.writeFile(path.join(__dirname, "934F9081.pnach"), make_pnach(mod), () => {
 		console.log("pnach written");
 	});
-	patch_file(mod, "SCUS_973.67", "df_hack.elf", -1048448).then(() => {
+	/*patch_file(mod, "SCUS_973.67", "df_hack_raw.elf", -1048448).then(() => {
 		console.log("elf written");
+	});*/
+	fs.writeFile(path.join(__dirname, "./loader/patch.c"), make_c_loader(mod), () => {
+		console.log("patch c file written");
 	});
 });
