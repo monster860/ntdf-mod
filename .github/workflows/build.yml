@@ -1,0 +1,38 @@
+name: Build
+
+on: 
+  push: 
+    branches: master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup
+      run: |
+        sudo apt-get update && sudo apt-get install nodejs
+        wget https://github.com/ps2dev/ps2dev/releases/download/v1.1/ps2dev-ubuntu-latest.tar.gz
+        tar -xzf ps2dev-ubuntu-latest.tar.gz --directory /usr/local
+        export PS2DEV=/usr/local/ps2dev
+        export PS2SDK=$PS2DEV/ps2sdk
+        export GSKIT=$PS2DEV/gsKit
+        export PATH=$PATH:$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin
+
+    - name: Build
+      run: |
+        cd mod
+        ./build.sh
+        cd ..
+
+    - name: Prepare Artifacts
+      run: mkdir artifacts
+      cp mod/934F9081.pnach artifacts
+      cp mod/df_hack.elf artifacts
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: PS2
+        path: ${{github.workspace}}/artifacts
