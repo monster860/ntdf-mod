@@ -27,9 +27,10 @@ jobs:
         cd ..
 
     - name: Prepare Artifacts
-      run: mkdir artifacts
-      cp mod/934F9081.pnach artifacts
-      cp mod/df_hack.elf artifacts
+      run: |
+        mkdir artifacts
+        cp mod/934F9081.pnach artifacts
+        cp mod/df_hack.elf artifacts
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v1
