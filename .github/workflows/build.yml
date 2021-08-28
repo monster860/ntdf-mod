@@ -15,13 +15,14 @@ jobs:
         sudo apt-get update && sudo apt-get install nodejs
         wget https://github.com/ps2dev/ps2dev/releases/download/v1.1/ps2dev-ubuntu-latest.tar.gz
         sudo tar -xzf ps2dev-ubuntu-latest.tar.gz --directory /usr/local
+        
+
+    - name: Build
+      run: |
         export PS2DEV=/usr/local/ps2dev
         export PS2SDK=$PS2DEV/ps2sdk
         export GSKIT=$PS2DEV/gsKit
         export PATH=$PATH:$PS2DEV/bin:$PS2DEV/ee/bin:$PS2DEV/iop/bin:$PS2DEV/dvp/bin:$PS2SDK/bin
-
-    - name: Build
-      run: |
         cd mod
         ./build.sh
         cd ..
