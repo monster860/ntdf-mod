@@ -1,6 +1,7 @@
 #define sprintf ((void (*)(char *, const char *, ...))0x2c1480)
 #define printf ((void (*)(const char *, ...))0x2ca710)
 #define DisplayScreenMessage ((void (*)(char *, float, float, float))0x179620)
+#define DisplayWorldString ((void (*)(int, u128, char*, bool))0x1729b0)
 #define FloatToChar ((void (*)(float, int, char*))0x1796c0)
 #define draw_debug_text ((void (*)(const char *, bool, const char *, int, void*, void*, float, float, float))0x255618)
 //#define get_sound_ptr ((void*(*)())0x286c90)
@@ -35,6 +36,8 @@
 extern "C" float sqrtf(float f) {
 	__asm("sqrt.s $f00, $f12\n\tjr $31\n\tnop");
 }
+
+typedef unsigned int u128 __attribute__(( mode(TI) ));
 
 typedef void *(*HandleResumeGamePtr)(int, int, int, int, int);
 typedef void *(*HandleScreenPtr)(int, int, int, int, int);
@@ -73,6 +76,7 @@ const int textbox_buf_len = 0x400;
 bool debug_mode_on = false;
 bool suppress_loads = false;
 bool coords_display = false;
+bool alignment_display = false;
 
 float *old_map_matrix = (float*)0x70000000;
 float *old_map_matrix_ptr;
@@ -89,6 +93,17 @@ float map_scale_z = 448/3 * 0.005;
 float player_last_x = 0;
 float player_last_z = 0;
 
+char *alignment_strings[] = {
+	"None",
+	"Fire",
+	"Earth",
+	"Light",
+	"Water",
+	"Air",
+	"Darkness",
+	"Rainbow"
+};
+
 // Hack menu includes:
 char *hack_menu_items[] = {
 	"Load Area\n",
@@ -103,11 +118,12 @@ char *hack_menu_items[] = {
 char *hex_digits = "0""\0""1""\0""2""\0""3""\0""4""\0""5""\0""6""\0""7""\0""8""\0""9""\0""a""\0""b""\0""c""\0""d""\0""e""\0""f";
 char fade_color[] = {0x80, 0x0, 0x80, 0x0};
 
-const int NUM_OPTIONS = 3;
+const int NUM_OPTIONS = 4;
 char *options_menu_items[] = {
 	"Debug Mode",
 	"Suppress Loads",
 	"Show Coordinates",
+	"Show Alignments"
 };
 char *options_menu_description[] = {
 	"Enables the debug mode\n"
@@ -124,11 +140,16 @@ char *options_menu_description[] = {
 	"Warning: can cause game crashes\n"
 	"if there's too much text on the\n"
 	"screen.",
+
+	"Displays alignemtns of enemies\n"
+	"Can causes crashes if there's\n"
+	"too much text on the screen.\n"
 };
 bool *options_menu_flags[] = {
 	&debug_mode_on,
 	&suppress_loads,
 	&coords_display,
+	&alignment_display,
 };
 
 char *save_game_text = "Save Game (01)";
@@ -989,6 +1010,31 @@ extern "C" void do_mod() {
 		DisplayScreenMessage(char_buf, -3.0f, 3.0f, 20.0f);
 		player_last_x = x;
 		player_last_z = z;
+	}
+	if(*((int*)0x39ABD8) == 0xB3B62C && alignment_display) {
+		int num_enemies = *((int*)0x35c8f8);
+		int *enemies = *((int**)0x35c8fc);
+		for(int i = 0; i < num_enemies; i++) {
+			int enemy = enemies[i];
+			int vtable = *((int*)(enemy + 0x164));
+			int (*alignment_fun)(int) = *(int (**)(int))(vtable + 0x114);
+			int alignment = alignment_fun(enemy + *((int*)(vtable + 0x110)));
+			if(alignment > 0 && alignment <= 7) {
+				union {
+					struct {
+						float x, y, z, w;
+					};
+					u128 packed;
+				} location;
+				int entity_pointer = *((int*)(enemy + 0x16C));
+				location.x = *((float*)(entity_pointer + 0x50));
+				location.y = *((float*)(entity_pointer + 0x54));
+				location.z = *((float*)(entity_pointer + 0x58));
+				location.w = 1.0;
+				DisplayWorldString(*((int*)0x35c884), location.packed, alignment_strings[alignment], false);
+			}
+		}
+		//printf("\n");
 	}
 	 /*
 
