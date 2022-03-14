@@ -13,6 +13,8 @@ create_mod(path.join(__dirname, "mod.o"), 0x3043B0, {"memset": 0x2BFE8C}).then(m
 	mod.patches.push({addr: 0x2DD1F8, int_data: mod.symbols["MapScreenHook"].abs_addr});
 	mod.patches.push({addr: 0x2DD1D4, int_data: mod.symbols["LoadScreenHook"].abs_addr});
 	mod.patches.push({addr: 0x2DD1D8, int_data: mod.symbols["SaveScreenHook"].abs_addr});
+	mod.patches.push({addr: 0x10dba8, int_data: 0x08000000 | (mod.symbols["SetWorldStart"].abs_addr >> 2)});
+	mod.patches.push({addr: 0x2dd1b0, int_data: mod.symbols["TitleScreenHook"].abs_addr});
 	fs.writeFile(path.join(__dirname, "934F9081.pnach"), make_pnach(mod), () => {
 		console.log("pnach written");
 	});

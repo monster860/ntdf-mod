@@ -58,6 +58,7 @@ const HandleScreenPtr HandleMapScreen = (HandleScreenPtr)0x1a7348;
 const HandleScreenPtr HandleGameScreen = (HandleScreenPtr)0x1a3190;
 const HandleScreenPtr HandleLoadScreen = (HandleScreenPtr)0x1a62b0;
 const HandleScreenPtr HandleSaveScreen = (HandleScreenPtr)0x1a6600;
+const HandleScreenPtr HandleTitleScreen = (HandleScreenPtr)0x1a1128;
 
 typedef void (*draw_text_ptr)(const char *, void *, const char *, int *, float, float, float, float, float, float, float);
 int draw_text_buf[] = {0x0809681E, 0xc7b20000};
@@ -654,6 +655,20 @@ extern "C" void *ResumeGameHook(int a0, int a1, int a2, int a3, int t0) {
 
 extern "C" bool IsDebugMode() {
 	return debug_mode_on;
+}
+
+extern "C" void SetWorldStart(int a0, int a1) {
+	*((int*)0x2d7560) = a0;
+	*((int*)0x2d7564) = a1;
+}
+
+extern "C" void* TitleScreenHook(int a0, int a1, int a2, int a3, int t0) {
+	if(a0 == 0 && a1 >= 5 && (controller_buttons_instant & 0x40)) {
+		playmenusound(0x5);
+		return (void*)0xb3b6a4;
+	} else {
+		return HandleTitleScreen(a0, a1, a2, a3, t0);
+	}
 }
 
 bool update_zone_map() {
