@@ -1,5 +1,7 @@
 ## Building
 
+**Note that you can find prebuilt files in the [releases tab](https://github.com/monster860/ntdf-mod/releases)**
+
 You need the following:
 - PS2 sdk + toolchain, [found here](https://github.com/ps2dev/ps2dev). This will require a linux environment. If you are on windows you may use Windows Subsystem for Linux
 - Node.JS
