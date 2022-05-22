@@ -23,6 +23,16 @@
 #define get_floor_height ((float (*)(int, int*, void *, float, float, float))0x217b20)
 #define handle_world_controls ((void (*)(int))0x1E2C10)
 
+#define sceUsbKbInit ((int (*)(unsigned int*))0x2a4e98)
+#define sceUsbKbSetCodeType ((int (*)(int, int))0x2a55e0)
+#define sceUsbKbSetReadMode ((int (*)(int, int))0x2a62a0)
+#define sceUsbKbSetArrangement ((int (*)(int, int))0x2a5630)
+#define sceUsbKbSetRepeat ((int (*)(int, int, int))0x2a5598)
+#define sceUsbKbSync ((int (*)(int, unsigned int*))0x2a5680)
+#define sceUsbKbRead ((int (*)(int, struct keyboardInfo *))0x2a5200)
+
+#define strlen ((int (*)(char*))0x2c02d8)
+
 #define resume_game_ptr_1 (*((char**)0xB41594))
 #define resume_game_ptr_2 (*((char**)0xB415A4))
 #define selected_select_item (*((short*)0xb3b5ac))
@@ -182,6 +192,16 @@ enum MenuState {
 	MENU_OFF, MENU_MAIN, MENU_LOAD_AREA, MENU_GIVE_ITEM_ID, MENU_GIVE_ITEM_AMT, MENU_EDIT_NP, MENU_EDIT_FLAGS, MENU_OPTIONS
 };
 MenuState state;
+
+struct keyboardInfo {
+	int unk;
+	int modifiers;
+	int changed;
+	unsigned short key;
+	short unk2;
+};
+keyboardInfo kbData;
+int kb_initialized = 0;
 
 int swizzle(int x, int y, int width) {
 	return (((y & 2) >> 1)| ((x & 8) >> 2) | ((x & 3) << 2) | (((x & 4) ^ (y & 4) ^ ((y & 2) << 1)) << 2) | ((x & ~15) << 1)) + (((y & 1) | ((y & ~3) >> 1)) * width * 2);
@@ -350,6 +370,42 @@ extern "C" void *LoadScreenHook(int a0, int a1, int a2, int a3, int t0) {
 }
 
 extern "C" void *SaveScreenHook(int a0, int a1, int a2, int a3, int t0) {
+	if(save_flag == 3) {
+		if(!kb_initialized) {
+			unsigned int keyboard_thingy;
+			int result = sceUsbKbInit(&keyboard_thingy);
+			printf("sceUsbKbInit returned %d, %d\n", result, keyboard_thingy);
+			sceUsbKbSetCodeType(0, 1);
+			sceUsbKbSetReadMode(0, 0);
+			sceUsbKbSetArrangement(0, 1);
+			sceUsbKbSetRepeat(0, 15, 5);
+			kb_initialized = 1;
+		}
+
+		char* name_buf = (char*)0x35f98f + 0x3100 * *((int*)0x2dcff4);
+
+		unsigned int sync_result;
+		int ret = sceUsbKbRead(0, &kbData);
+		int sync = sceUsbKbSync(0, &sync_result);
+		if(sync == 0 && sync_result == 0 && kbData.changed) {
+			int len = strlen(name_buf);
+			if(len < 31) {
+				if((kbData.key >= 'a' && kbData.key <= 'z') || (kbData.key >= 'A' && kbData.key <= 'Z') || kbData.key == ' ' || (kbData.key >= '0' && kbData.key <= '9')) {
+					name_buf[len] = kbData.key;
+				}
+				if(kbData.key == ':') name_buf[len] = '\'';
+			}
+			if(kbData.key == 8 && len > 0) {
+				name_buf[len-1] = 0;
+			}
+		}
+
+		char* save_ui_buf = (char*)0x39b740;
+		save_ui_buf[0] = 0;
+		append_str(save_ui_buf, "Save data?\nUse USB keyboard to name file:\n\n", 128);
+		append_str(save_ui_buf, name_buf, 128);
+		if(*((int*)0x37bb68) != 0) *((char**)0x37bb68) = save_ui_buf;
+	}
 	save_game_text[0] = 'S';
 	save_game_text[1] = 'a';
 	save_game_text[2] = 'v';
